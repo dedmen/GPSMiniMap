@@ -8,40 +8,209 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_main">
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:minWidth="25px"
-        android:minHeight="25px"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/linearLayout1"
-        android:weightSum="1">
+        android:layout_height="match_parent">
+        
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        <EditText
-            android:inputType="textShortMessage"
+            <GridLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:rowCount="2"
+                android:columnCount="2">
+
+                <Button
+                    android:text="SwitchCamera"
+                    android:minWidth="25px"
+                    android:minHeight="25px"
+                    android:layout_marginEnd="5px"
+                    android:layout_width="wrap_content"
+                    android:id="@+id/buttonSwitchCamera" />
+
+                <Button
+                    android:text="Dummy"
+                    android:minWidth="25px"
+                    android:minHeight="25px"
+                    android:layout_marginEnd="5px"
+                    android:layout_width="wrap_content"
+                    android:id="@+id/buttonDummy" />
+
+                <GridLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:rowCount="3"
+                android:columnCount="1">
+
+                    <RadioGroup
+                        android:minWidth="25px"
+                        android:minHeight="25px"
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/cargoRadioGroup">
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="Loading"
+                            android:id="@+id/radioButtonLoading" />
+                        <RadioButton
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Unloading"
+                            android:id="@+id/radioButtonUnloading" />
+                    </RadioGroup>
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="10"
+                            android:id="@+id/buttonCargo10" />
+
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="20"
+                            android:id="@+id/buttonCargo20" />
+
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="30"
+                            android:id="@+id/buttonCargo30" />
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="40"
+                            android:id="@+id/buttonCargo40" />
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:minWidth="25px"
+                            android:text="50"
+                            android:id="@+id/buttonCargo50" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" >
+
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="60"
+                            android:id="@+id/buttonCargo60" />
+
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="70"
+                            android:id="@+id/buttonCargo70" />
+
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="80"
+                            android:id="@+id/buttonCargo80" />
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="90"
+                            android:id="@+id/buttonCargo90" />
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:minWidth="25px"
+                            android:text="100"
+                            android:id="@+id/buttonCargo100" />
+                    </LinearLayout>
+
+
+
+
+
+                </GridLayout>
+
+
+
+
+
+                </GridLayout>
+
+            <!-- 
+            
+            radio buttons L/U loading/unloading
+            // buttons steps of 10
+
+
+            -->
+
+
+         <LinearLayout
+            android:orientation="horizontal"
+            android:minWidth="25px"
+            android:minHeight="25px"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/editText1"
-            android:layout_weight="0.2"
-            android:imeOptions="normal|actionSend"
-            android:imeActionLabel="Send" 
-            android:maxLines="1"
-            android:minLines="1"
+            android:id="@+id/linearLayout1"
+            android:weightSum="1">
+
+            <EditText
+                android:inputType="textShortMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/editText1"
+                android:layout_weight="0.2"
+                android:imeOptions="normal|actionSend"
+                android:imeActionLabel="Send" 
+                android:maxLines="1"
+                android:minLines="1"
             
-            />
-        <Button
-            android:text="Send"
+                />
+            <Button
+                android:text="Send"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/button1" 
+                android:layout_weight="0.8"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:text=""
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/button1" 
-            android:layout_weight="0.8"/>
+            android:layout_height="wrap_content"
+            android:id="@+id/textView1" />
+        </LinearLayout>
+    
+    </ScrollView>
 
-    </LinearLayout>
-
-    <TextView
-        android:text=""
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/textView1" />
+   
 
 </LinearLayout>
