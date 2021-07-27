@@ -18,12 +18,17 @@
         android:weightSum="1">
 
         <EditText
+            android:inputType="textShortMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/editText1"
             android:layout_weight="0.2"
             android:imeOptions="normal|actionSend"
-            android:imeActionLabel="Send" />
+            android:imeActionLabel="Send" 
+            android:maxLines="1"
+            android:minLines="1"
+            
+            />
         <Button
             android:text="Send"
             android:layout_width="match_parent"
