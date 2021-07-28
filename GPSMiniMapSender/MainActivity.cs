@@ -11,6 +11,7 @@ using Xamarin.Essentials;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Timers;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace GPSMiniMapSender
 {
@@ -43,13 +44,13 @@ namespace GPSMiniMapSender
 
             myTimer.Elapsed += (x,y) => TimerEventProcessor();
             myTimer.Interval = 1000;
-            myTimer.AutoReset = true;
+            myTimer.AutoReset = false;
 
             var allChatBox = FindViewById<AppCompatTextView>(Resource.Id.textView1);
             
             hubConnection.On<string>("ChatMessage", (message) => {
                 RunOnUiThread(() => {
-                    allChatBox.Append($"{DateTime.Now:t} {message}\n");
+                    allChatBox.Text = ($"{DateTime.Now:T} {message}\n{allChatBox.Text}"); // this is somewhat stupid, but the best prepend I could find
                 });
             });
 
@@ -74,21 +75,8 @@ namespace GPSMiniMapSender
 
             buttonSend.Click += async (x, y) =>
             {
-                try
-                {
-                    await hubConnection.SendAsync("ChatMessage", chatInputBox.Text);
-                    chatInputBox.Text = "";
-                }
-                catch (Exception ex)
-                {
-                    RunOnUiThread(() => {
-                        Android.App.AlertDialog.Builder alert = new Android.App.AlertDialog.Builder(this);
-                        alert.SetTitle("Exception");
-                        alert.SetMessage(ex.Message);
-                        Dialog dialog = alert.Create();
-                        dialog.Show();
-                    });
-                }
+                await SendChatMessage(chatInputBox.Text);
+                chatInputBox.Text = "";
             };
 
 
@@ -103,6 +91,59 @@ namespace GPSMiniMapSender
             var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(2));
             var location = Geolocation.GetLocationAsync(request, System.Threading.CancellationToken.None);
 
+
+            // Set up the buttons
+
+            FindViewById<AppCompatButton>(Resource.Id.buttonSwitchCamera).Click += async (x, y) =>
+            {
+                await SendChatMessage("switchCamera");
+            };
+
+            Func<string> GetCargoState = () =>
+            {
+                if (FindViewById<AppCompatRadioButton>(Resource.Id.radioButtonLoading).Checked)
+                {
+                    return "cargo L";
+                }
+
+                if (FindViewById<AppCompatRadioButton>(Resource.Id.radioButtonUnloading).Checked)
+                {
+                    return "cargo U";
+                }
+                return "";
+            };
+
+            // cargo progress
+
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo10).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 10"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo20).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 20"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo30).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 30"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo40).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 40"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo50).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 50"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo60).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 60"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo70).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 70"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo80).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 80"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo90).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 90"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo100).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 100"); };
+        }
+
+
+        private async Task SendChatMessage(string message)
+        {
+            try
+            {
+                await hubConnection.SendAsync("ChatMessage", message);
+            }
+            catch (Exception ex)
+            {
+                RunOnUiThread(() => {
+                    Android.App.AlertDialog.Builder alert = new Android.App.AlertDialog.Builder(this);
+                    alert.SetTitle("Exception");
+                    alert.SetMessage(ex.Message);
+                    Dialog dialog = alert.Create();
+                    dialog.Show();
+                });
+            }
         }
 
 
@@ -122,18 +163,18 @@ namespace GPSMiniMapSender
             */
             try
             {          
-            var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(1));
-            var location = await Geolocation.GetLocationAsync(request, System.Threading.CancellationToken.None);
+                var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(1));
+                var location = await Geolocation.GetLocationAsync(request, System.Threading.CancellationToken.None);
 
-            await hubConnection.SendAsync("UpdatePosition", $"{{" +
-                $"\"latitude\": {location.Latitude}," +
-                $"\"longitude\": {location.Longitude}," +
-                $"\"heading\": {(location.Course.HasValue ? location.Course.Value.ToString() : "null")}," +
-                $"\"speed\": {(location.Speed.HasValue ? location.Speed.Value.ToString() : "null")}," +
-                $"\"accuracy\": {(location.Accuracy.HasValue ? location.Accuracy.Value.ToString() : "null")}," +
-                $"\"altitude\": {(location.Altitude.HasValue ? location.Altitude.Value.ToString() : "null")}," +
-                $"\"altitudeAccuracy\": {(location.VerticalAccuracy.HasValue ? location.VerticalAccuracy.Value.ToString() : "null")}" +
-                $"}}");
+                await hubConnection.SendAsync("UpdatePosition", $"{{" +
+                    $"\"latitude\": {location.Latitude}," +
+                    $"\"longitude\": {location.Longitude}," +
+                    $"\"heading\": {(location.Course.HasValue ? location.Course.Value.ToString() : "null")}," +
+                    $"\"speed\": {(location.Speed.HasValue ? location.Speed.Value.ToString() : "null")}," +
+                    $"\"accuracy\": {(location.Accuracy.HasValue ? location.Accuracy.Value.ToString() : "null")}," +
+                    $"\"altitude\": {(location.Altitude.HasValue ? location.Altitude.Value.ToString() : "null")}," +
+                    $"\"altitudeAccuracy\": {(location.VerticalAccuracy.HasValue ? location.VerticalAccuracy.Value.ToString() : "null")}" +
+                    $"}}");
 
             }
             catch (FeatureNotSupportedException fnsEx)
@@ -171,15 +212,15 @@ namespace GPSMiniMapSender
             }
             catch (Exception ex)
             {
-                //RunOnUiThread(() => {
-                //    Android.App.AlertDialog.Builder alert = new Android.App.AlertDialog.Builder(this);
-                //    alert.SetTitle("Exception");
-                //    alert.SetMessage(ex.Message);
-                //    Dialog dialog = alert.Create();
-                //    dialog.Show();
-                //});
+                RunOnUiThread(() => {
+                    Android.App.AlertDialog.Builder alert = new Android.App.AlertDialog.Builder(this);
+                    alert.SetTitle("Exception");
+                    alert.SetMessage(ex.Message);
+                    Dialog dialog = alert.Create();
+                    dialog.Show();
+                });
             }
-
+            myTimer.Start();
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
