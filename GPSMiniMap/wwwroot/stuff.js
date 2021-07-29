@@ -7,7 +7,11 @@ let map, curPosMarker, automoveBlockedUntil;
 var connection = new signalR.HubConnectionBuilder()
 .withUrl("/chatHub")
 .configureLogging(signalR.LogLevel.Information)
-.withAutomaticReconnect()
+.withAutomaticReconnect({
+  nextRetryDelayInMilliseconds: retryContext => {
+      return Math.random() * 10000;
+  }
+})
 .build();
 
 automoveBlockedUntil = 0;

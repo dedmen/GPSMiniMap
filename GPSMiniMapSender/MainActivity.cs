@@ -15,11 +15,22 @@ using System.Threading.Tasks;
 
 namespace GPSMiniMapSender
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
+
+    public class EndlessRetryPolicy : IRetryPolicy
+    {
+        public TimeSpan? NextRetryDelay(RetryContext retryContext)
+        {
+            return TimeSpan.FromSeconds(10);
+        }
+    }
+
+
+    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]   
     public class MainActivity : AppCompatActivity
     {
         HubConnection hubConnection;
         static System.Timers.Timer myTimer = new System.Timers.Timer();
+
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -39,7 +50,7 @@ namespace GPSMiniMapSender
 
             hubConnection = new HubConnectionBuilder()
             .WithUrl("URL HERE")
-            .WithAutomaticReconnect()
+            .WithAutomaticReconnect(new EndlessRetryPolicy())
             .Build();
 
             myTimer.Elapsed += (x,y) => TimerEventProcessor();
