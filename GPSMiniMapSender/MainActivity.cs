@@ -115,6 +115,7 @@ namespace GPSMiniMapSender
 
             // cargo progress
 
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargo0).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 0"); };
             FindViewById<AppCompatButton>(Resource.Id.buttonCargo10).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 10"); };
             FindViewById<AppCompatButton>(Resource.Id.buttonCargo20).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 20"); };
             FindViewById<AppCompatButton>(Resource.Id.buttonCargo30).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 30"); };
@@ -125,6 +126,7 @@ namespace GPSMiniMapSender
             FindViewById<AppCompatButton>(Resource.Id.buttonCargo80).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 80"); };
             FindViewById<AppCompatButton>(Resource.Id.buttonCargo90).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 90"); };
             FindViewById<AppCompatButton>(Resource.Id.buttonCargo100).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} 100"); };
+            FindViewById<AppCompatButton>(Resource.Id.buttonCargoToggle).Click += async (x, y) => { await SendChatMessage($"{GetCargoState()} toggle"); };
         }
 
 

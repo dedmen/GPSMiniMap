@@ -29,6 +29,7 @@
                     android:minHeight="25px"
                     android:layout_marginEnd="5px"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:id="@+id/buttonSwitchCamera" />
 
                 <Button
@@ -37,6 +38,7 @@
                     android:minHeight="25px"
                     android:layout_marginEnd="5px"
                     android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:id="@+id/buttonDummy" />
 
                 <GridLayout
@@ -45,30 +47,51 @@
                 android:rowCount="3"
                 android:columnCount="1">
 
-                    <RadioGroup
-                        android:minWidth="25px"
-                        android:minHeight="25px"
-                        android:orientation="horizontal"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/cargoRadioGroup">
-                        <RadioButton
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:checked="true"
-                            android:text="Loading"
-                            android:id="@+id/radioButtonLoading" />
-                        <RadioButton
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Unloading"
-                            android:id="@+id/radioButtonUnloading" />
-                    </RadioGroup>
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content">
+                        <RadioGroup
+                            android:minWidth="25px"
+                            android:minHeight="25px"
+                            android:orientation="horizontal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:id="@+id/cargoRadioGroup">
+                            <RadioButton
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:text="Loading"
+                                android:id="@+id/radioButtonLoading" />
+                            <RadioButton
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Unloading"
+                                android:id="@+id/radioButtonUnloading" />
+                        </RadioGroup>
+
+                        <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="Toggle"
+                            android:id="@+id/buttonCargoToggle" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                         <Button
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10px"
+                            android:minWidth="25px"
+                            android:text="0"
+                            android:id="@+id/buttonCargo0" />
 
                         <Button
                             android:layout_width="wrap_content"
