@@ -5,3 +5,6 @@
 /GPSMiniMapSender/bin
 /GPSMiniMapSender/obj
 /GPSMiniMap/obj
+/.vs
+/GPSMinimapReceiver/.vs
+/GPSMiniMapSender/.vs
