@@ -20,6 +20,53 @@ let isOBS2 = window.location.href.indexOf("?obs2") > -1;
 // URL contains ?desktop
 let isDesktop = isOBS || window.location.href.indexOf("?desktop") > -1;
 
+
+function CenterControl(controlDiv, map) {
+  // Set CSS for the control border.
+  const controlUI = document.createElement("div");
+  controlUI.style.backgroundColor = "#fff";
+  controlUI.style.border = "2px solid #fff";
+  controlUI.style.borderRadius = "3px";
+  controlUI.style.boxShadow = "0 2px 6px rgba(0,0,0,.3)";
+  controlUI.style.cursor = "pointer";
+  controlUI.style.marginTop = "8px";
+  controlUI.style.marginBottom = "22px";
+  controlUI.style.textAlign = "center";
+  controlUI.title = "Toggle autocenter";
+  controlDiv.appendChild(controlUI);
+  // Set CSS for the control interior.
+  const controlText = document.createElement("div");
+  controlText.style.color = "rgb(25,25,25)";
+  controlText.style.fontFamily = "Roboto,Arial,sans-serif";
+  controlText.style.fontSize = "16px";
+  controlText.style.lineHeight = "38px";
+  controlText.style.paddingLeft = "5px";
+  controlText.style.paddingRight = "5px";
+  controlText.innerHTML = "Toggle autocenter";
+  controlUI.appendChild(controlText);
+  // Setup the click event listeners: simply set the map to Chicago.
+  controlUI.addEventListener("click", () => {
+    if (automoveBlockedUntil == 0){
+      automoveBlockedUntil = Number.MAX_SAFE_INTEGER;
+      controlUI.style.backgroundColor = "#f00";
+    }
+    else {
+      automoveBlockedUntil = 0;
+      controlUI.style.backgroundColor = "#fff";
+    }
+      
+  });
+}
+
+
+
+
+
+
+
+
+
+
 function initMap() {
   if (isSendOnly) // sendOnly has no map
     return;
@@ -70,13 +117,16 @@ function initMap() {
 
   map.addListener("drag", () => {
     // block autocenter for next 5 seconds
-    automoveBlockedUntil = new Date().valueOf() + 5000;
+    let nextTime = new Date().valueOf() + 5000;
+    if (automoveBlockedUntil < nextTime)
+      automoveBlockedUntil = new Date().valueOf() + 5000;
   });
 
-
-
-
-
+  if (isDesktop) {
+    const centerControlDiv = document.createElement("div");
+    CenterControl(centerControlDiv, map);
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+  }
 }
 
 connection.start().then(function () {
@@ -180,4 +230,10 @@ connection.on("UpdatePosition", function (message) {
     
     curPosMarker.setPosition(pos);
 
+});
+
+connection.on("ChatMessage", function (message) {
+    if (message == "reloadweb") {
+        location.reload(); 
+    }
 });
