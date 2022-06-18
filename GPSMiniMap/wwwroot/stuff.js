@@ -126,7 +126,7 @@ function initMap() {
       automoveBlockedUntil = new Date().valueOf() + 5000;
   });
 
-  if (isDesktop) {
+  if (isDesktop && !isOBS) {
     const centerControlDiv = document.createElement("div");
     CenterControl(centerControlDiv, map);
     map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
