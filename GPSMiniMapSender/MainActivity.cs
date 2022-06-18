@@ -1,4 +1,7 @@
-﻿using System;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Security;
 using Android.App;
 using Android.OS;
 using Android.Runtime;
@@ -12,9 +15,18 @@ using Microsoft.AspNetCore.SignalR.Client;
 using System.Timers;
 using System.Threading;
 using System.Threading.Tasks;
+using Android.Content;
+using GPSMiniMapSender.Services;
 
 namespace GPSMiniMapSender
 {
+
+
+    public static class Constants
+    {
+        public static readonly string SERVICE_STATUS_KEY = "service_status";
+    }
+
 
     public class EndlessRetryPolicy : IRetryPolicy
     {
@@ -30,10 +42,24 @@ namespace GPSMiniMapSender
     {
         HubConnection hubConnection;
         static System.Timers.Timer myTimer = new System.Timers.Timer();
-
+        Intent serviceIntent;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
+            ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicy) =>
+            {
+                if (sslPolicy == SslPolicyErrors.None)
+                    return true;
+
+                if (sslPolicy == SslPolicyErrors.RemoteCertificateChainErrors &&
+                    ((HttpWebRequest)sender).RequestUri.Authority.Equals("MY_API_DOMAIN"))
+                    return true;
+
+                return false;
+            };
+
+
+
             base.OnCreate(savedInstanceState);
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
@@ -49,7 +75,18 @@ namespace GPSMiniMapSender
 
 
             hubConnection = new HubConnectionBuilder()
-            .WithUrl("URL HERE")
+            .WithUrl("URL HERE", (opts) =>
+            {
+                // Ignore https connection errors
+                opts.HttpMessageHandlerFactory = (message) =>
+                {
+                    if (message is HttpClientHandler clientHandler)
+                        // always verify the SSL certificate
+                        clientHandler.ServerCertificateCustomValidationCallback +=
+                            (sender, certificate, chain, sslPolicyErrors) => { return true; };
+                    return message;
+                };
+            })
             .WithAutomaticReconnect(new EndlessRetryPolicy())
             .Build();
 
@@ -94,21 +131,40 @@ namespace GPSMiniMapSender
             hubConnection.StartAsync().ContinueWith(
                 (x) => {
                     Looper.Prepare();
-                    myTimer.Start();
+                    //myTimer.Start();
                     Snackbar.Make(chatInputBox, $"Connected? State: {hubConnection.State}", Snackbar.LengthLong).Show();
                 },System.Threading.Tasks.TaskScheduler.Current);
+
+
+            serviceIntent = new Intent(this, typeof(AndroidLocationService));
+
+            //if (Build.VERSION.SdkInt >= BuildVersionCodes.M && !Android.Provider.Settings.CanDrawOverlays(this))
+            //{
+            //    var intent = new Intent(Android.Provider.Settings.ActionManageOverlayPermission);
+            //    intent.SetFlags(ActivityFlags.NewTask);
+            //    this.StartActivity(intent);
+            //}
 
             // do once on mainthread to get permission
             var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(2));
             var location = Geolocation.GetLocationAsync(request, System.Threading.CancellationToken.None);
-
-
+            
             // Set up the buttons
 
             FindViewById<AppCompatButton>(Resource.Id.buttonSwitchCamera).Click += async (x, y) =>
             {
                 await SendChatMessage("switchCamera");
             };
+
+            FindViewById<AppCompatButton>(Resource.Id.buttonEnableService).Click += (x, y) =>
+            {
+                Start();
+            };
+            FindViewById<AppCompatButton>(Resource.Id.buttonDisableService).Click += (x, y) =>
+            {
+                OnStopClick();
+            };
+
 
             Func<string> GetCargoState = () =>
             {
@@ -176,7 +232,7 @@ namespace GPSMiniMapSender
             */
             try
             {          
-                var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(1));
+                var request = new GeolocationRequest(GeolocationAccuracy.High, TimeSpan.FromSeconds(1));
                 var location = await Geolocation.GetLocationAsync(request, System.Threading.CancellationToken.None);
 
                 await hubConnection.SendAsync("UpdatePosition", $"{{" +
@@ -266,5 +322,68 @@ namespace GPSMiniMapSender
 
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
-	}
+
+        private bool IsServiceRunning(System.Type cls)
+        {
+            ActivityManager manager = (ActivityManager)GetSystemService(Context.ActivityService);
+            foreach (var service in manager.GetRunningServices(int.MaxValue))
+            {
+                if (service.Service.ClassName.Equals(Java.Lang.Class.FromType(cls).CanonicalName))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        public void OnStopClick()
+        {
+            if (IsServiceRunning(typeof(AndroidLocationService)))
+                StopService(serviceIntent);
+
+            //UserMessage = "Location Service has been stopped!";
+            SecureStorage.SetAsync(Constants.SERVICE_STATUS_KEY, "0");
+            //StartEnabled = true;
+            //StopEnabled = false;
+        }
+
+        void ValidateStatus()
+        {
+            var status = SecureStorage.GetAsync(Constants.SERVICE_STATUS_KEY).Result;
+            if (status != null && status.Equals("1"))
+            {
+                Start();
+            }
+        }
+
+        void Start()
+        {
+            if (!IsServiceRunning(typeof(AndroidLocationService)))
+            {
+                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+                {
+                    StartForegroundService(serviceIntent);
+                }
+                else
+                {
+                    StartService(serviceIntent);
+                }
+            }
+
+            //UserMessage = "Location Service has been started!";
+            SecureStorage.SetAsync(Constants.SERVICE_STATUS_KEY, "1");
+            //StartEnabled = false;
+            //StopEnabled = true;
+        }
+
+
+
+
+
+
+
+
+
+    }
 }
