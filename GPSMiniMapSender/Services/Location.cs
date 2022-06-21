@@ -15,6 +15,11 @@ using Android.Bluetooth;
 using Google.Android.Material.Snackbar;
 using Microsoft.AspNetCore.SignalR.Client;
 using Xamarin.Essentials;
+using Android.Locations;
+using Java.Security;
+using Java.Interop;
+using Plugin.Geolocator;
+using Plugin.Geolocator.Abstractions;
 
 namespace GPSMiniMapSender.Services
 {
@@ -22,6 +27,7 @@ namespace GPSMiniMapSender.Services
     {
         HubConnection hubConnection;
         readonly bool stopping = false;
+        private Position _lastPosition;
         public Location()
         {
             hubConnection = new HubConnectionBuilder()
@@ -42,13 +48,44 @@ namespace GPSMiniMapSender.Services
 
         }
 
+
+
+
+
         public async Task Run(CancellationToken token)
         {
-            await Task.Run(async () => {
+            await Task.Run(async () =>
+            {
 
-
+                var locator = CrossGeolocator.Current;
                 await hubConnection.StartAsync();
-                
+
+                if (!CrossGeolocator.Current.IsListening)
+                    await locator.StartListeningAsync(TimeSpan.FromSeconds(5), 10, true, new ListenerSettings {AllowBackgroundUpdates = true});
+               
+                locator.PositionChanged += (sender, args) =>
+                {
+                    if (_lastPosition != null &&
+                        _lastPosition.CalculateDistance(args.Position, GeolocatorUtils.DistanceUnits.Kilometers) < 0.01)
+                        return; // too close to last
+                    var location = args.Position;
+                    _lastPosition = location;
+                    hubConnection.SendAsync("UpdatePosition", $"{{" +
+                                                                    $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                    $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                    $"\"heading\": {location.Heading.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                    $"\"speed\": {location.Speed.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                    $"\"accuracy\": {location.Accuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                    $"\"altitude\": {location.Altitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                    $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+                                                                $"}}");
+                };
+                locator.PositionError += (sender, args) =>
+                {
+                    hubConnection.SendAsync("ChatMessage", args.Error.ToString());
+                };
+
+                /*
                 while (!stopping)
                 {
 
@@ -56,10 +93,10 @@ namespace GPSMiniMapSender.Services
                     {
                         token.ThrowIfCancellationRequested();
 
-                        await Task.Delay(2000);
+                        await Task.Delay(2000, token);
 
-                        var request = new GeolocationRequest(GeolocationAccuracy.High, TimeSpan.FromSeconds(1));
-                        var location = await Geolocation.GetLocationAsync(request);
+                        var request = new GeolocationRequest(GeolocationAccuracy.High, TimeSpan.FromSeconds(5));
+                        var location = await Geolocation.GetLocationAsync(request, token);
                         if (location != null)
                         {
                             await hubConnection.SendAsync("UpdatePosition", $"{{" +
@@ -78,6 +115,12 @@ namespace GPSMiniMapSender.Services
                         await hubConnection.SendAsync("ChatMessage", ex.Message);
                     }
                 }
+                */
+                token.WaitHandle.WaitOne();
+
+
+                await locator.StopListeningAsync();
+
                 return;
             }, token);
         }
