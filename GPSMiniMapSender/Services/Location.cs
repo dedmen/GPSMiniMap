@@ -49,7 +49,18 @@ namespace GPSMiniMapSender.Services
         }
 
 
-
+        void SendUpdateAsync(Position location)
+        {
+            hubConnection.SendAsync("UpdatePosition", $"{{" +
+                                                      $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                      $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                      $"\"heading\": {location.Heading.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                      $"\"speed\": {location.Speed.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                      $"\"accuracy\": {location.Accuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                      $"\"altitude\": {location.Altitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                      $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+                                                      $"}}");
+        }
 
 
         public async Task Run(CancellationToken token)
@@ -70,15 +81,7 @@ namespace GPSMiniMapSender.Services
                         return; // too close to last
                     var location = args.Position;
                     _lastPosition = location;
-                    hubConnection.SendAsync("UpdatePosition", $"{{" +
-                                                                    $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                    $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                    $"\"heading\": {location.Heading.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                    $"\"speed\": {location.Speed.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                    $"\"accuracy\": {location.Accuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                    $"\"altitude\": {location.Altitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                    $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
-                                                                $"}}");
+                    SendUpdateAsync(location);
                 };
                 locator.PositionError += (sender, args) =>
                 {
@@ -116,8 +119,12 @@ namespace GPSMiniMapSender.Services
                     }
                 }
                 */
-                token.WaitHandle.WaitOne();
 
+                {
+                    token.WaitHandle.WaitOne(30000); // Send update every 30 seconds manually, in case the automatic updating doesn't send anything
+                    SendUpdateAsync(await locator.GetLastKnownLocationAsync());
+                }
+                while (!token.IsCancellationRequested);
 
                 await locator.StopListeningAsync();
 
