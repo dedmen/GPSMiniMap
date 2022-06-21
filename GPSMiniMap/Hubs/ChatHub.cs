@@ -19,11 +19,13 @@ namespace GPSMiniMap.Hubs
 
         public override Task OnConnectedAsync()
         {
+            Console.WriteLine($"{DateTime.Now:s} User connected {Context.ConnectionId}");
             return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
+            Console.WriteLine($"{DateTime.Now:s} User disconnected {Context.ConnectionId}");
             return base.OnDisconnectedAsync(exception);
         }
 
