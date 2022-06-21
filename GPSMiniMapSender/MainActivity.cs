@@ -25,6 +25,7 @@ namespace GPSMiniMapSender
     public static class Constants
     {
         public static readonly string SERVICE_STATUS_KEY = "service_status";
+        public static readonly string ACTION_STOP_SERVICE = "stop_service";
     }
 
 
@@ -130,7 +131,7 @@ namespace GPSMiniMapSender
 
             hubConnection.StartAsync().ContinueWith(
                 (x) => {
-                    Looper.Prepare();
+                    //Looper.Prepare();
                     //myTimer.Start();
                     Snackbar.Make(chatInputBox, $"Connected? State: {hubConnection.State}", Snackbar.LengthLong).Show();
                 },System.Threading.Tasks.TaskScheduler.Current);
@@ -343,19 +344,19 @@ namespace GPSMiniMapSender
                 StopService(serviceIntent);
 
             //UserMessage = "Location Service has been stopped!";
-            SecureStorage.SetAsync(Constants.SERVICE_STATUS_KEY, "0");
+            //SecureStorage.SetAsync(Constants.SERVICE_STATUS_KEY, "0");
             //StartEnabled = true;
             //StopEnabled = false;
         }
 
-        void ValidateStatus()
-        {
-            var status = SecureStorage.GetAsync(Constants.SERVICE_STATUS_KEY).Result;
-            if (status != null && status.Equals("1"))
-            {
-                Start();
-            }
-        }
+        //void ValidateStatus()
+        //{
+        //    var status = SecureStorage.GetAsync(Constants.SERVICE_STATUS_KEY).Result;
+        //    if (status != null && status.Equals("1"))
+        //    {
+        //        Start();
+        //    }
+        //}
 
         void Start()
         {
@@ -372,7 +373,7 @@ namespace GPSMiniMapSender
             }
 
             //UserMessage = "Location Service has been started!";
-            SecureStorage.SetAsync(Constants.SERVICE_STATUS_KEY, "1");
+            //SecureStorage.SetAsync(Constants.SERVICE_STATUS_KEY, "1");
             //StartEnabled = false;
             //StopEnabled = true;
         }

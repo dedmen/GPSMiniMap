@@ -1,4 +1,4 @@
-﻿using Android.App;
+using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Android.Bluetooth;
 using Xamarin.Essentials;
+using Android.Nfc;
+using Android.Util;
 
 namespace GPSMiniMapSender.Services
 {
@@ -28,9 +30,17 @@ namespace GPSMiniMapSender.Services
 
         public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
+
+            if (intent.Action != null && intent.Action.Equals(Constants.ACTION_STOP_SERVICE))
+            {
+                _cts?.Cancel();
+                StopForeground(true);
+                StopSelf();
+            }
+
             _cts = new CancellationTokenSource();
 
-            Notification notif = NotificationHelper.ReturnNotif();
+            Notification notif = NotificationHelper.ReturnNotif(this);
             StartForeground(SERVICE_RUNNING_NOTIFICATION_ID, notif);
 
             Task.Run(() => {

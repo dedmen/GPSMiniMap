@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AndroidX.Core.App;
+using AndroidX.Core.Graphics.Drawable;
+using GPSMiniMapSender.Services;
 
 namespace GPSMiniMapSender
 {
@@ -18,20 +20,26 @@ namespace GPSMiniMapSender
         private static Context context = global::Android.App.Application.Context;
 
 
-        public static Notification ReturnNotif()
+        public static Notification ReturnNotif(AndroidLocationService androidLocationService)
         {
-            var intent = new Intent(context, typeof(MainActivity));
-            intent.AddFlags(ActivityFlags.SingleTop);
-            intent.PutExtra("Title", "Message");
+            //var intent = new Intent(context, typeof(MainActivity));
+            //intent.AddFlags(ActivityFlags.SingleTop);
+            //intent.PutExtra("Title", "Message");
+            //
+            //var pendingIntent = PendingIntent.GetActivity(context, 0, intent, PendingIntentFlags.UpdateCurrent);
 
-            var pendingIntent = PendingIntent.GetActivity(context, 0, intent, PendingIntentFlags.UpdateCurrent);
+            var stopServiceIntent = new Intent(androidLocationService, androidLocationService.GetType());
+            stopServiceIntent.SetAction(Constants.ACTION_STOP_SERVICE);
+            var stopServicePendingIntent = PendingIntent.GetService(androidLocationService, 0, stopServiceIntent, 0);
 
-            var notifBuilder = new NotificationCompat.Builder(context, foregroundChannelId)
+
+            var notifBuilder = new Notification.Builder(context, foregroundChannelId)
                 .SetContentTitle("GPSMinimap")
                 .SetContentText("GPS Minimap is running!")
-                //.SetSmallIcon(Resource.Drawable.location)
+                .SetSmallIcon(Android.Resource.Drawable.IcMenuMyLocation)
+                .AddAction(BuildStopServiceAction(androidLocationService))
                 .SetOngoing(true)
-                .SetContentIntent(pendingIntent);
+                .SetContentIntent(stopServicePendingIntent);
 
             if (global::Android.OS.Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
@@ -52,5 +60,23 @@ namespace GPSMiniMapSender
 
             return notifBuilder.Build();
         }
+
+        /// <summary>
+        /// Builds the Notification.Action that will allow the user to stop the service via the
+        /// notification in the status bar
+        /// </summary>
+        /// <returns>The stop service action.</returns>
+        static Notification.Action BuildStopServiceAction(AndroidLocationService androidLocationService)
+        {
+            var stopServiceIntent = new Intent(androidLocationService, androidLocationService.GetType());
+            stopServiceIntent.SetAction(Constants.ACTION_STOP_SERVICE);
+            var stopServicePendingIntent = PendingIntent.GetService(androidLocationService, 0, stopServiceIntent, 0);
+
+            var builder = new Notification.Action.Builder(0, "Stop", stopServicePendingIntent);
+            return builder.Build();
+
+        }
+
+
     }
 }
