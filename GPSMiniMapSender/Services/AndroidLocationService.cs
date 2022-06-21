@@ -22,6 +22,7 @@ namespace GPSMiniMapSender.Services
     {
         CancellationTokenSource _cts;
         public const int SERVICE_RUNNING_NOTIFICATION_ID = 10000;
+        private Location _loc = null;
 
         public override IBinder OnBind(Intent intent)
         {
@@ -33,9 +34,12 @@ namespace GPSMiniMapSender.Services
 
             if (intent.Action != null && intent.Action.Equals(Constants.ACTION_STOP_SERVICE))
             {
+                _loc.Shutdown();
                 _cts?.Cancel();
                 StopForeground(true);
                 StopSelf();
+                _cts = null;
+                return StartCommandResult.NotSticky;
             }
 
             _cts = new CancellationTokenSource();
@@ -46,8 +50,8 @@ namespace GPSMiniMapSender.Services
             Task.Run(() => {
                 try
                 {
-                    var locShared = new Location();
-                    locShared.Run(_cts.Token).Wait();
+                    _loc = new Location();
+                    _loc.Run(_cts.Token).Wait();
                 }
                 //catch (OperationCanceledException)
                 //{

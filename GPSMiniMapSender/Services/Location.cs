@@ -120,16 +120,27 @@ namespace GPSMiniMapSender.Services
                 }
                 */
 
-                {
+                do {
                     token.WaitHandle.WaitOne(30000); // Send update every 30 seconds manually, in case the automatic updating doesn't send anything
                     SendUpdateAsync(await locator.GetLastKnownLocationAsync());
                 }
                 while (!token.IsCancellationRequested);
 
-                await locator.StopListeningAsync();
+                if (CrossGeolocator.Current.IsListening)
+                    await locator.StopListeningAsync();
+                if (hubConnection.State == HubConnectionState.Connected)
+                    await hubConnection.StopAsync();
 
                 return;
             }, token);
+        }
+
+        public void Shutdown()
+        {
+            if (CrossGeolocator.Current.IsListening)
+                CrossGeolocator.Current.StopListeningAsync();
+            if (hubConnection.State == HubConnectionState.Connected)
+                hubConnection.StopAsync();
         }
     }
 }
