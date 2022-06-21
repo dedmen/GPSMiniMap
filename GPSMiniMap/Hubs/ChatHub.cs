@@ -19,6 +19,7 @@ namespace GPSMiniMap.Hubs
 
         public async Task ChatMessage(string message)
         {
+            Console.WriteLine($"{DateTime.Now:s} chat message from {Context.ConnectionId}: {message}");
             await Clients.All.SendAsync("ChatMessage", message);
         }
 
