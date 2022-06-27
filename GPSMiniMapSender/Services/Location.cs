@@ -20,6 +20,8 @@ using Java.Security;
 using Java.Interop;
 using Plugin.Geolocator;
 using Plugin.Geolocator.Abstractions;
+using System.Runtime.Remoting.Contexts;
+using Context = Android.Content.Context;
 
 namespace GPSMiniMapSender.Services
 {
@@ -48,10 +50,13 @@ namespace GPSMiniMapSender.Services
 
         }
 
-
-        void SendUpdateAsync(Position location)
+        private static Context context = global::Android.App.Application.Context;
+        async Task SendUpdateAsync(Position location)
         {
-            hubConnection.SendAsync("UpdatePosition", $"{{" +
+            if (hubConnection.State !=HubConnectionState.Connected && hubConnection.State != HubConnectionState.Connected)
+                await hubConnection.StartAsync();
+
+            await hubConnection.SendAsync("UpdatePosition", $"{{" +
                                                       $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
                                                       $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
                                                       $"\"heading\": {location.Heading.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
@@ -60,6 +65,19 @@ namespace GPSMiniMapSender.Services
                                                       $"\"altitude\": {location.Altitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
                                                       $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
                                                       $"}}");
+
+            var builder = NotificationHelper.GetBuilderCached();
+            if (builder != null)
+            {
+                builder.SetContentText($"Last update {DateTime.Now:T}");
+
+                var notifManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
+                if (notifManager != null)
+                {
+                    notifManager.Notify(AndroidLocationService.SERVICE_RUNNING_NOTIFICATION_ID, builder.Build());
+                }
+            }
+
         }
 
 
@@ -67,12 +85,14 @@ namespace GPSMiniMapSender.Services
         {
             await Task.Run(async () =>
             {
+                try
+                {
+                    var locator = CrossGeolocator.Current;
+                    await hubConnection.StartAsync();
+                    await hubConnection.SendAsync("ChatMessage", "LocationServiceHello");
 
-                var locator = CrossGeolocator.Current;
-                await hubConnection.StartAsync();
-
-                if (!CrossGeolocator.Current.IsListening)
-                    await locator.StartListeningAsync(TimeSpan.FromSeconds(5), 10, true, new ListenerSettings {AllowBackgroundUpdates = true});
+                    if (!CrossGeolocator.Current.IsListening)
+                        await locator.StartListeningAsync(TimeSpan.FromSeconds(5), 10, true, new ListenerSettings {AllowBackgroundUpdates = true});
                
                 locator.PositionChanged += (sender, args) =>
                 {
@@ -82,11 +102,22 @@ namespace GPSMiniMapSender.Services
                     var location = args.Position;
                     _lastPosition = location;
                     SendUpdateAsync(location);
-                };
-                locator.PositionError += (sender, args) =>
-                {
-                    hubConnection.SendAsync("ChatMessage", args.Error.ToString());
-                };
+                    };
+                    locator.PositionError += (sender, args) =>
+                    {
+                        var builder = NotificationHelper.GetBuilderCached();
+                        if (builder != null)
+                        {
+                            builder.SetContentText($"ERROR1 {args.Error}");
+
+                            if (context.GetSystemService(Context.NotificationService) is NotificationManager notifManager)
+                            {
+                                notifManager.Notify(AndroidLocationService.SERVICE_RUNNING_NOTIFICATION_ID, builder.Build());
+                            }
+                        }
+
+                        hubConnection.SendAsync("ChatMessage", args.Error.ToString());
+                    };
 
                 /*
                 while (!stopping)
@@ -118,18 +149,38 @@ namespace GPSMiniMapSender.Services
                         await hubConnection.SendAsync("ChatMessage", ex.Message);
                     }
                 }
-                */
+                    */
 
-                do {
-                    token.WaitHandle.WaitOne(30000); // Send update every 30 seconds manually, in case the automatic updating doesn't send anything
-                    SendUpdateAsync(await locator.GetLastKnownLocationAsync());
-                }
-                while (!token.IsCancellationRequested);
+                    do {
+                        await SendUpdateAsync(await locator.GetLastKnownLocationAsync());
+                        await Task.Delay(30000, token); // Send update every 30 seconds manually, in case the automatic updating doesn't send anything
+                    }
+                    while (!token.IsCancellationRequested);
 
                 if (CrossGeolocator.Current.IsListening)
                     await locator.StopListeningAsync();
-                if (hubConnection.State == HubConnectionState.Connected)
-                    await hubConnection.StopAsync();
+                    if (hubConnection.State == HubConnectionState.Connected)
+                        await hubConnection.StopAsync();
+
+                }
+                catch (Exception ex)
+                {
+
+                    var builder = NotificationHelper.GetBuilderCached();
+                    if (builder != null)
+                    {
+                        builder.SetContentText($"ERROR2 {ex.Message}");
+
+                        var notifManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
+                        if (notifManager != null)
+                        {
+                            notifManager.Notify(AndroidLocationService.SERVICE_RUNNING_NOTIFICATION_ID, builder.Build());
+                        }
+                    }
+
+                    await hubConnection.SendAsync("ChatMessage", ex.Message);
+                }
+
 
                 return;
             }, token);
