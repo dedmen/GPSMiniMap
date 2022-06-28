@@ -53,23 +53,27 @@ namespace GPSMiniMapSender.Services
         private static Context context = global::Android.App.Application.Context;
         async Task SendUpdateAsync(Position location)
         {
-            if (hubConnection.State !=HubConnectionState.Connected && hubConnection.State != HubConnectionState.Connected)
+            if (hubConnection.State == HubConnectionState.Disconnected)
                 await hubConnection.StartAsync();
 
-            await hubConnection.SendAsync("UpdatePosition", $"{{" +
-                                                      $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                      $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                      $"\"heading\": {location.Heading.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                      $"\"speed\": {location.Speed.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                      $"\"accuracy\": {location.Accuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                      $"\"altitude\": {location.Altitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                      $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
-                                                      $"}}");
+            if (hubConnection.State == HubConnectionState.Connected)
+                await hubConnection.SendAsync("UpdatePosition", $"{{" +
+                                                                $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                $"\"heading\": {location.Heading.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                $"\"speed\": {location.Speed.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                $"\"accuracy\": {location.Accuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                $"\"altitude\": {location.Altitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+                                                                $"}}");
 
             var builder = NotificationHelper.GetBuilderCached();
             if (builder != null)
             {
-                builder.SetContentText($"Last update {DateTime.Now:T}");
+                if (hubConnection.State == HubConnectionState.Connected)
+                    builder.SetContentText($"Last update {DateTime.Now:T}");
+                else
+                    builder.SetContentText($"Cannot send, not connected {DateTime.Now:T}");
 
                 var notifManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
                 if (notifManager != null)
@@ -89,19 +93,21 @@ namespace GPSMiniMapSender.Services
                 {
                     var locator = CrossGeolocator.Current;
                     await hubConnection.StartAsync();
-                    await hubConnection.SendAsync("ChatMessage", "LocationServiceHello");
+
+                    if (hubConnection.State == HubConnectionState.Connected)
+                        await hubConnection.SendAsync("ChatMessage", "LocationServiceHello");
 
                     if (!CrossGeolocator.Current.IsListening)
                         await locator.StartListeningAsync(TimeSpan.FromSeconds(5), 10, true, new ListenerSettings {AllowBackgroundUpdates = true});
-               
-                locator.PositionChanged += (sender, args) =>
-                {
-                    if (_lastPosition != null &&
-                        _lastPosition.CalculateDistance(args.Position, GeolocatorUtils.DistanceUnits.Kilometers) < 0.01)
-                        return; // too close to last
-                    var location = args.Position;
-                    _lastPosition = location;
-                    SendUpdateAsync(location);
+
+                    locator.PositionChanged += (sender, args) =>
+                    {
+                        if (_lastPosition != null &&
+                            _lastPosition.CalculateDistance(args.Position, GeolocatorUtils.DistanceUnits.Kilometers) < 0.01)
+                            return; // too close to last
+                        var location = args.Position;
+                        _lastPosition = location;
+                        SendUpdateAsync(location);
                     };
                     locator.PositionError += (sender, args) =>
                     {
@@ -116,39 +122,40 @@ namespace GPSMiniMapSender.Services
                             }
                         }
 
-                        hubConnection.SendAsync("ChatMessage", args.Error.ToString());
+                        if (hubConnection.State == HubConnectionState.Connected)
+                            hubConnection.SendAsync("ChatMessage", args.Error.ToString());
                     };
 
-                /*
-                while (!stopping)
-                {
-
-                    try
+                    /*
+                    while (!stopping)
                     {
-                        token.ThrowIfCancellationRequested();
 
-                        await Task.Delay(2000, token);
-
-                        var request = new GeolocationRequest(GeolocationAccuracy.High, TimeSpan.FromSeconds(5));
-                        var location = await Geolocation.GetLocationAsync(request, token);
-                        if (location != null)
+                        try
                         {
-                            await hubConnection.SendAsync("UpdatePosition", $"{{" +
-                                                                            $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                            $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                            $"\"heading\": {(location.Course.HasValue ? location.Course.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
-                                                                            $"\"speed\": {(location.Speed.HasValue ? location.Speed.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
-                                                                            $"\"accuracy\": {(location.Accuracy.HasValue ? location.Accuracy.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
-                                                                            $"\"altitude\": {(location.Altitude.HasValue ? location.Altitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
-                                                                            $"\"altitudeAccuracy\": {(location.VerticalAccuracy.HasValue ? location.VerticalAccuracy.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}" +
-                                                                            $"}}");
+                            token.ThrowIfCancellationRequested();
+
+                            await Task.Delay(2000, token);
+
+                            var request = new GeolocationRequest(GeolocationAccuracy.High, TimeSpan.FromSeconds(5));
+                            var location = await Geolocation.GetLocationAsync(request, token);
+                            if (location != null)
+                            {
+                                await hubConnection.SendAsync("UpdatePosition", $"{{" +
+                                                                                $"\"latitude\": {location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                                $"\"longitude\": {location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                                $"\"heading\": {(location.Course.HasValue ? location.Course.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
+                                                                                $"\"speed\": {(location.Speed.HasValue ? location.Speed.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
+                                                                                $"\"accuracy\": {(location.Accuracy.HasValue ? location.Accuracy.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
+                                                                                $"\"altitude\": {(location.Altitude.HasValue ? location.Altitude.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}," +
+                                                                                $"\"altitudeAccuracy\": {(location.VerticalAccuracy.HasValue ? location.VerticalAccuracy.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "null")}" +
+                                                                                $"}}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            await hubConnection.SendAsync("ChatMessage", ex.Message);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        await hubConnection.SendAsync("ChatMessage", ex.Message);
-                    }
-                }
                     */
 
                     do {
@@ -157,8 +164,8 @@ namespace GPSMiniMapSender.Services
                     }
                     while (!token.IsCancellationRequested);
 
-                if (CrossGeolocator.Current.IsListening)
-                    await locator.StopListeningAsync();
+                    if (CrossGeolocator.Current.IsListening)
+                        await locator.StopListeningAsync();
                     if (hubConnection.State == HubConnectionState.Connected)
                         await hubConnection.StopAsync();
 
@@ -178,7 +185,8 @@ namespace GPSMiniMapSender.Services
                         }
                     }
 
-                    await hubConnection.SendAsync("ChatMessage", ex.Message);
+                    if (hubConnection.State == HubConnectionState.Connected)
+                        await hubConnection.SendAsync("ChatMessage", ex.Message);
                 }
 
 
