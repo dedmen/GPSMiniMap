@@ -158,8 +158,11 @@ namespace GPSMiniMapSender.Services
                     }
                     */
 
-                    do {
-                        await SendUpdateAsync(await locator.GetLastKnownLocationAsync());
+                    do
+                    {
+                        var lastLocation = await locator.GetLastKnownLocationAsync();
+                        if (lastLocation != null)
+                            await SendUpdateAsync(lastLocation);
                         await Task.Delay(30000, token); // Send update every 30 seconds manually, in case the automatic updating doesn't send anything
                     }
                     while (!token.IsCancellationRequested);
@@ -178,15 +181,14 @@ namespace GPSMiniMapSender.Services
                     {
                         builder.SetContentText($"ERROR2 {ex.Message}");
 
-                        var notifManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
-                        if (notifManager != null)
+                        if (context.GetSystemService(Context.NotificationService) is NotificationManager notifManager)
                         {
                             notifManager.Notify(AndroidLocationService.SERVICE_RUNNING_NOTIFICATION_ID, builder.Build());
                         }
                     }
 
                     if (hubConnection.State == HubConnectionState.Connected)
-                        await hubConnection.SendAsync("ChatMessage", ex.Message);
+                        await hubConnection.SendAsync("ChatMessage", $"E2 {ex.Message}, stack {ex.StackTrace}");
                 }
 
 
