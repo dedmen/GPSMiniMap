@@ -160,7 +160,7 @@ namespace GPSMiniMapSender.Services
 
                     do
                     {
-                        var lastLocation = await locator.GetLastKnownLocationAsync();
+                        var lastLocation = await locator.GetPositionAsync(TimeSpan.FromSeconds(5));
                         if (lastLocation != null)
                             await SendUpdateAsync(lastLocation);
                         await Task.Delay(30000, token); // Send update every 30 seconds manually, in case the automatic updating doesn't send anything
