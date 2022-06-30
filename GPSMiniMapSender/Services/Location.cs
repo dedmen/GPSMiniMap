@@ -50,6 +50,23 @@ namespace GPSMiniMapSender.Services
 
         }
 
+
+        void UpdateNotification(string newText)
+        {
+            var builder = NotificationHelper.GetBuilderCached();
+            if (builder != null)
+            {
+                builder.SetContentText(newText);
+
+                var notifManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
+                if (notifManager != null)
+                {
+                    notifManager.Notify(AndroidLocationService.SERVICE_RUNNING_NOTIFICATION_ID, builder.Build());
+                }
+            }
+        }
+
+
         private static Context context = global::Android.App.Application.Context;
         async Task SendUpdateAsync(Position location)
         {
@@ -67,21 +84,9 @@ namespace GPSMiniMapSender.Services
                                                                 $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
                                                                 $"}}");
 
-            var builder = NotificationHelper.GetBuilderCached();
-            if (builder != null)
-            {
-                if (hubConnection.State == HubConnectionState.Connected)
-                    builder.SetContentText($"Last update {DateTime.Now:T}");
-                else
-                    builder.SetContentText($"Cannot send, not connected {DateTime.Now:T}");
-
-                var notifManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
-                if (notifManager != null)
-                {
-                    notifManager.Notify(AndroidLocationService.SERVICE_RUNNING_NOTIFICATION_ID, builder.Build());
-                }
-            }
-
+            UpdateNotification(hubConnection.State == HubConnectionState.Connected
+                ? $"Last update {DateTime.Now:T}"
+                : $"Cannot send, not connected {DateTime.Now:T} {hubConnection.State}");
         }
 
 
@@ -89,9 +94,9 @@ namespace GPSMiniMapSender.Services
         {
             await Task.Run(async () =>
             {
+                var locator = CrossGeolocator.Current;
                 try
                 {
-                    var locator = CrossGeolocator.Current;
                     await hubConnection.StartAsync();
 
                     if (hubConnection.State == HubConnectionState.Connected)
@@ -105,6 +110,7 @@ namespace GPSMiniMapSender.Services
                         if (_lastPosition != null &&
                             _lastPosition.CalculateDistance(args.Position, GeolocatorUtils.DistanceUnits.Kilometers) < 0.01)
                             return; // too close to last
+                        UpdateNotification($"Last Up recv {DateTime.Now:T}");
                         var location = args.Position;
                         _lastPosition = location;
                         SendUpdateAsync(location);
@@ -166,13 +172,8 @@ namespace GPSMiniMapSender.Services
                         await Task.Delay(30000, token); // Send update every 30 seconds manually, in case the automatic updating doesn't send anything
                     }
                     while (!token.IsCancellationRequested);
-
-                    if (CrossGeolocator.Current.IsListening)
-                        await locator.StopListeningAsync();
-                    if (hubConnection.State == HubConnectionState.Connected)
-                        await hubConnection.StopAsync();
-
                 }
+                catch (TaskCanceledException _) {}
                 catch (Exception ex)
                 {
 
@@ -191,17 +192,22 @@ namespace GPSMiniMapSender.Services
                         await hubConnection.SendAsync("ChatMessage", $"E2 {ex.Message}, stack {ex.StackTrace}");
                 }
 
+                await Shutdown();
 
                 return;
             }, token);
         }
 
-        public void Shutdown()
+        public async Task Shutdown()
         {
             if (CrossGeolocator.Current.IsListening)
-                CrossGeolocator.Current.StopListeningAsync();
+                await CrossGeolocator.Current.StopListeningAsync();
+
             if (hubConnection.State == HubConnectionState.Connected)
-                hubConnection.StopAsync();
+            {
+                await hubConnection.SendAsync("ChatMessage", $"Stop Requested");
+                await hubConnection.StopAsync();
+            }
         }
     }
 }
