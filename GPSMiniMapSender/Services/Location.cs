@@ -47,7 +47,16 @@ namespace GPSMiniMapSender.Services
                 })
                 .WithAutomaticReconnect(new EndlessRetryPolicy())
                 .Build();
-
+            hubConnection.On<string>("ChatMessage", async (message) =>
+            {
+                if (message != "gpsreset") return;
+                if (CrossGeolocator.Current != null)
+                    _ = CrossGeolocator.Current.StopListeningAsync().ContinueWith(x =>
+                    {
+                        if (CrossGeolocator.Current != null)
+                            CrossGeolocator.Current.StartListeningAsync(TimeSpan.FromSeconds(5), 10, true, new ListenerSettings {AllowBackgroundUpdates = true});
+                    });
+            });
         }
 
 
