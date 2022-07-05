@@ -130,6 +130,15 @@ function initMap() {
     const centerControlDiv = document.createElement("div");
     CenterControl(centerControlDiv, map);
     map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
+	
+	
+	var measureTool = new MeasureTool(map, {
+	  showSegmentLength: true,
+	  unit: MeasureTool.UnitTypeId.METRIC // or just use 'imperial'
+	});
+	
+	
+	
   }
 }
 
