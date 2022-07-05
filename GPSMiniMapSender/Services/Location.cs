@@ -81,7 +81,8 @@ namespace GPSMiniMapSender.Services
                                                                 $"\"speed\": {location.Speed.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
                                                                 $"\"accuracy\": {location.Accuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
                                                                 $"\"altitude\": {location.Altitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
-                                                                $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}" +
+                                                                $"\"altitudeAccuracy\": {location.AltitudeAccuracy.ToString(System.Globalization.CultureInfo.InvariantCulture)}," +
+                                                                $"\"timestamp\": \"{location.Timestamp:u}\"" +
                                                                 $"}}");
 
             UpdateNotification(hubConnection.State == HubConnectionState.Connected
