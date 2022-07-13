@@ -2,7 +2,7 @@
 // prompted by your browser. If you see the error "The Geolocation service
 // failed.", it means you probably did not give permission for the browser to
 // locate you.
-let map, curPosMarker, automoveBlockedUntil;
+let map, curPosMarker, automoveBlockedUntil, curAccuracyMarker;
 
 var connection = new signalR.HubConnectionBuilder()
 .withUrl("/chatHub")
@@ -137,16 +137,23 @@ function initMap() {
     const centerControlDiv = document.createElement("div");
     CenterControl(centerControlDiv, map);
     map.controls[google.maps.ControlPosition.TOP_CENTER].push(centerControlDiv);
-	
-	
-	var measureTool = new MeasureTool(map, {
-	  showSegmentLength: true,
-	  unit: MeasureTool.UnitTypeId.METRIC // or just use 'imperial'
-	});
-	
-	
-	
+   var measureTool = new MeasureTool(map, {
+      showSegmentLength: true,
+      unit: MeasureTool.UnitTypeId.METRIC // or just use 'imperial'
+   });
   }
+	
+ curAccuracyMarker = new google.maps.Circle({
+  strokeColor: "#FF0000",
+  strokeOpacity: 0.8,
+  strokeWeight: 2,
+  fillColor: "#FF0000",
+  fillOpacity: 0.2,
+  map,
+  center: { lat: 0, lng: 0 },
+  radius: 0,
+ });
+	
 }
 
 connection.start().then(function () {
