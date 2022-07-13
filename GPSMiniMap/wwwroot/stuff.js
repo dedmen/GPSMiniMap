@@ -89,12 +89,12 @@ function initMap() {
 
   map = new google.maps.Map(document.getElementById("map"), {
     center: {
-      lat: 37.7893719,
-      lng: -122.3942,
+      lat: 56.511018,
+      lng: 3.515624,
     },
 
     zoom: defaultZoom,
-    heading: 320,
+    heading: 0,
     tilt: 47.5,
     mapId: "9f859f206c766f13",
     disableDefaultUI: isOBS,
@@ -103,12 +103,19 @@ function initMap() {
     gestureHandling: "greedy", // grab all gestures
   });
 
+  var marker = new google.maps.Marker({
+    position: new google.maps.LatLng(56.511018, 3.515624),
+    icon: {url:'https://static-cdn.jtvnw.net/jtv_user_pictures/jackd23-profile_image-86b4981fe59d9ae4-70x70.png', labelOrigin: new google.maps.Point(0,100)},
+    label: 'Jack is currently offline wrrm wrrm',
+    map: map
+  });
+
   const trafficLayer = new google.maps.TrafficLayer({map: map});
 
   curPosMarker = new google.maps.Marker({
     position: {
-      lat: 37.7893719,
-      lng: -122.3942,
+      lat: 56.511018,
+      lng: 3.515624,
     },
     map: map,
     icon: { // https://developers.google.com/maps/documentation/javascript/reference/marker#Symbol
