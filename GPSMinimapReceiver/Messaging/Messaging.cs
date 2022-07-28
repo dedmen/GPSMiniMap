@@ -14,6 +14,19 @@ namespace GPSMinimapReceiver.Messaging
     //    void Publish<T>(T @event); //where T : IDomainEvent;
     //}
 
+
+    public static class MessagingCenterExtensions
+    {
+        public static IDisposable SubscribeWithCatch<T>(this IObservable<T> source, Action<T> action)
+        {
+            return source.Subscribe(action, e =>
+            {
+                Console.WriteLine($"Messaging exception thrown {e}");
+            });
+        }
+
+    }
+
     public class MessagingCenter //: IEventAggregator
     {
         static readonly Subject<object> _subject = new Subject<object>();
@@ -22,20 +35,14 @@ namespace GPSMinimapReceiver.Messaging
         {
             return _subject.OfType<T>()
                 .AsObservable()
-                .Subscribe(x =>
-                {
-                    try
-                    {
-                        action(x);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"Messaging exception thrown {e}");
-                        throw;
-                    }
-
-                });
+                .SubscribeWithCatch(action);
         }
+
+        public static IObservable<T> GetEvent<T>()
+        {
+            return _subject.OfType<T>();
+        }
+
 
         public static void Publish<T>(T sampleEvent)
         {

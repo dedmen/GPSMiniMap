@@ -6,7 +6,9 @@ using OBSWebsocketDotNet.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace GPSMinimapReceiver.Automations
@@ -15,15 +17,16 @@ namespace GPSMinimapReceiver.Automations
     {
         public ChatMessageCargoHandler()
         {
-            MessagingCenter.Subscribe<Messaging.Events.GPSChatMessage>(chatMessage =>
-            {
-                if (!chatMessage.Message.StartsWith("cargo")) return; // Not a cargo message
+            MessagingCenter.GetEvent<Messaging.Events.GPSChatMessage>()
+                .Where(x => x.Message.StartsWith("cargo")) // Filter
+                .SubscribeWithCatch(chatMessage => 
+                {
+                    // Is a cargo message, lets process it
 
-                // Is a cargo message, lets process it
-
-                string[] argv = chatMessage.Message.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                OnMessage(argv);
-            });
+                    string[] argv = chatMessage.Message.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    OnMessage(argv);
+                }
+            );
         }
 
         private void OnMessage(string[] arguments)

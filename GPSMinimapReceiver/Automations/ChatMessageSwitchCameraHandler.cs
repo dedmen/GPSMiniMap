@@ -5,6 +5,7 @@ using OBSWebsocketDotNet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Speech.Synthesis;
@@ -15,15 +16,14 @@ namespace GPSMinimapReceiver.Automations
     {
         public ChatMessageSwitchCameraHandler()
         {
-            MessagingCenter.Subscribe<Messaging.Events.GPSChatMessage>(chatMessage =>
-            {
-                if (!chatMessage.Message.StartsWith("switchCamera")) return; // Not a cargo message
-
-                // Is a cargo message, lets process it
-
-                string[] argv = chatMessage.Message.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                OnMessage(argv);
-            });
+            MessagingCenter.GetEvent<Messaging.Events.GPSChatMessage>()
+                .Where(x => x.Message.StartsWith("switchCamera")) // Filter
+                .SubscribeWithCatch(chatMessage =>
+                    {
+                        string[] argv = chatMessage.Message.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        OnMessage(argv);
+                    }
+                );
         }
 
         private void OnMessage(string[] arguments)

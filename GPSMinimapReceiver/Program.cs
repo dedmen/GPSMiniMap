@@ -30,8 +30,7 @@ namespace GPSMinimapReceiver
             {
                 // Set up gps chat hub connection
 
-                HubConnection hubConnection;
-                hubConnection = new HubConnectionBuilder()
+                var hubConnection = new HubConnectionBuilder()
                     .WithUrl(Secret.HubLink)
                     .WithAutomaticReconnect()
                     .Build();
