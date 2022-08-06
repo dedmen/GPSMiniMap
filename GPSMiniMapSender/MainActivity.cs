@@ -17,6 +17,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Android.Content;
 using GPSMiniMapSender.Services;
+using Microsoft.AppCenter;
+using Microsoft.AppCenter.Distribute;
 using Sentry;
 
 namespace GPSMiniMapSender
@@ -54,15 +56,16 @@ namespace GPSMiniMapSender
         {
             SentryXamarin.Init(options =>
             {
-                // Tells which project in Sentry to send events to:
                 options.Dsn = "http://1bc959c13bbb4690b35136292047172e@lima.dedmen.de:9001/3";
-                // When configuring for the first time, to see what the SDK is doing:
-                options.Debug = true;
+                //options.Debug = true;
                 options.TracesSampleRate = 1.0;
                 options.AttachStacktrace = true;
                 options.AutoSessionTracking = true;
-                options.Release = "1.0";
+                options.Release = "1.1@37e58f0a9b897c43536b6c576db3dafe40689c0c";
             });
+
+            AppCenter.Start("e75b51e1-c2b0-40b7-9647-3a8ed009f8e6", typeof(Distribute));
+            Distribute.SetEnabledForDebuggableBuild(true);
 
             // SentrySdk.CaptureMessage("Hello Sentry");
 
