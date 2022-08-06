@@ -21,6 +21,7 @@ using Java.Interop;
 using Plugin.Geolocator;
 using Plugin.Geolocator.Abstractions;
 using System.Runtime.Remoting.Contexts;
+using Sentry;
 using Context = Android.Content.Context;
 
 namespace GPSMiniMapSender.Services
@@ -127,6 +128,7 @@ namespace GPSMiniMapSender.Services
                     };
                     locator.PositionError += (sender, args) =>
                     {
+                        SentrySdk.CaptureMessage($"PositionError {args.Error}", SentryLevel.Error);
                         var builder = NotificationHelper.GetBuilderCached();
                         if (builder != null)
                         {
@@ -186,7 +188,7 @@ namespace GPSMiniMapSender.Services
                 catch (TaskCanceledException _) {}
                 catch (Exception ex)
                 {
-
+                    SentrySdk.CaptureException(ex);
                     var builder = NotificationHelper.GetBuilderCached();
                     if (builder != null)
                     {

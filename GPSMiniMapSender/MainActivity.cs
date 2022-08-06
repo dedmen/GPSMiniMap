@@ -17,10 +17,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Android.Content;
 using GPSMiniMapSender.Services;
+using Sentry;
 
 namespace GPSMiniMapSender
 {
+    // BatteryOptimizationsIntent  https://social.msdn.microsoft.com/Forums/en-US/895f0759-e05d-4747-b72b-e16a2e8dbcf9/developing-a-location-background-service?forum=xamarinforms
+    // https://github.com/shernandezp/XamarinForms.LocationService +++
 
+    // https://github.com/jamesmontemagno/GeolocatorPlugin 
+    // https://www.youtube.com/watch?v=Q_renpfnbk4
 
     public static class Constants
     {
@@ -47,6 +52,20 @@ namespace GPSMiniMapSender
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
+            SentryXamarin.Init(options =>
+            {
+                // Tells which project in Sentry to send events to:
+                options.Dsn = "http://1bc959c13bbb4690b35136292047172e@lima.dedmen.de:9001/3";
+                // When configuring for the first time, to see what the SDK is doing:
+                options.Debug = true;
+                options.TracesSampleRate = 1.0;
+                options.AttachStacktrace = true;
+                options.AutoSessionTracking = true;
+                options.Release = "1.0";
+            });
+
+            // SentrySdk.CaptureMessage("Hello Sentry");
+
             ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicy) =>
             {
                 if (sslPolicy == SslPolicyErrors.None)
@@ -206,6 +225,7 @@ namespace GPSMiniMapSender
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 RunOnUiThread(() => {
                     Android.App.AlertDialog.Builder alert = new Android.App.AlertDialog.Builder(this);
                     alert.SetTitle("Exception");
@@ -282,6 +302,7 @@ namespace GPSMiniMapSender
             }
             catch (Exception ex)
             {
+                SentrySdk.CaptureException(ex);
                 RunOnUiThread(() => {
                     Android.App.AlertDialog.Builder alert = new Android.App.AlertDialog.Builder(this);
                     alert.SetTitle("Exception");
