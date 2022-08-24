@@ -21,6 +21,18 @@ namespace GPSMiniMap
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+
+                    webBuilder.UseSentry(o =>
+                    {
+                        o.Dsn = "http://a2a62a06bbf14275a095cbdb1728b554@lima.dedmen.de:9001/4";
+                        // When configuring for the first time, to see what the SDK is doing:
+                        o.Debug = true;
+                        // Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+                        // We recommend adjusting this value in production.
+                        o.TracesSampleRate = 1.0;
+                        o.AttachStacktrace = true;
+                    });
+
                 });
     }
 }

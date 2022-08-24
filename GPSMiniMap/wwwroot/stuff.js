@@ -5,7 +5,9 @@
 let map, curPosMarker, automoveBlockedUntil, curAccuracyMarker;
 
 var connection = new signalR.HubConnectionBuilder()
-.withUrl("/chatHub")
+    .withUrl("/chatHub", {
+        accessTokenFactory: () => "webClient"
+    })
 .configureLogging(signalR.LogLevel.Information)
 .withAutomaticReconnect({
   nextRetryDelayInMilliseconds: retryContext => {
@@ -22,7 +24,7 @@ let isSendOnly = window.location.href.indexOf("?sendOnly") > -1;
 let isOBS = window.location.href.indexOf("?obs") > -1;
 let isOBS2 = window.location.href.indexOf("?obs2") > -1;
 // URL contains ?desktop
-let isDesktop = isOBS || window.location.href.indexOf("?desktop") > -1;
+let isDesktop = true; // isOBS || window.location.href.indexOf("?desktop") > -1;
 
 
 function CenterControl(controlDiv, map) {
@@ -54,22 +56,22 @@ function CenterControl(controlDiv, map) {
       automoveBlockedUntil = Number.MAX_SAFE_INTEGER;
       controlUI.style.backgroundColor = "#f00";
     }
-    else {
+    else
+    {
       automoveBlockedUntil = 0;
       controlUI.style.backgroundColor = "#fff";
+
+	  const pos = {
+        lat: lastPosUpdate.latitude,
+        lng: lastPosUpdate.longitude,
+      };
+	  
+      map.setCenter(pos);
+      map.setHeading(lastPosUpdate.heading);
     }
       
   });
 }
-
-
-
-
-
-
-
-
-
 
 function initMap() {
   if (isSendOnly) // sendOnly has no map
@@ -161,7 +163,7 @@ connection.start().then(function () {
   // Add location listener
   
   // Try HTML5 geolocation.
-  if (!isDesktop && navigator.geolocation) {
+  if (isSendOnly && navigator.geolocation) {
     navigator.geolocation.watchPosition(
       (position) => {
         // https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates
@@ -228,7 +230,7 @@ observer.observe(targetNode, config);
 //observer.disconnect();
 
 
-
+var lastPosUpdate = {};
 
 
 connection.on("UpdatePosition", function (message) {
@@ -243,6 +245,8 @@ connection.on("UpdatePosition", function (message) {
         lat: obj.latitude,
         lng: obj.longitude,
       };
+	  
+	lastPosUpdate = obj;
     
 
     if (!automoveBlockedUntil)
@@ -257,6 +261,13 @@ connection.on("UpdatePosition", function (message) {
     
     curPosMarker.setPosition(pos);
 
+
+
+
+    // add new lat/long to last path if we have a running history
+    if (currentHistoryMarkers.length > 0)
+        currentHistoryMarkers[currentHistoryMarkers.length - 1].getPath().push(new google.maps.LatLng(pos));
+
 });
 
 connection.on("ChatMessage", function (message) {
@@ -264,3 +275,117 @@ connection.on("ChatMessage", function (message) {
         location.reload(); 
     }
 });
+
+
+var currentTargetMarkers = [];
+
+connection.on("UpdateMarkedLocations", function (message) {
+    const obj = JSON.parse(message);
+
+    //"[
+    //{\"Name\":\"dorsten\",\"Longitude\":6.964260599999999,\"Latitude\":51.6559681},
+    //{\"Name\":\"dortmund\",\"Longitude\":7.465298100000001,\"Latitude\":51.5135872},
+    //{\"Name\":\"straussfurt\",\"Longitude\":10.983056,\"Latitude\":51.166667}
+    //]"
+
+
+    // Remove markers from map
+    currentTargetMarkers.forEach(element => element.setMap(null));
+    currentTargetMarkers = [];
+
+
+    obj.forEach(element => {
+        var newMarker = new google.maps.Marker({
+            position: {
+                lat: element.Latitude,
+                lng: element.Longitude,
+            },
+            map: map,
+            icon: { // https://developers.google.com/maps/documentation/javascript/reference/marker#Symbol
+                path: google.maps.SymbolPath.BACKWARD_OPEN_ARROW,
+                scale: 4
+            },
+            title: element.Name,
+            label: {
+                text: element.RealName,
+                fontSize: '30px'
+            }
+        });
+
+        currentTargetMarkers.push(newMarker);
+    });
+
+
+    if (currentHistoryMarkers.length == 0) {
+        const flightPlanCoordinates = [
+            { lat: 51.6559681, lng: 6.964260599999999 },
+            { lat: 51.5135872, lng: 7.465298100000001 },
+            { lat: 51.166667, lng: 10.983056 }
+        ];
+        var newMarker = new google.maps.Polyline({ // https://developers.google.com/maps/documentation/javascript/reference/polygon#Polyline
+            path: flightPlanCoordinates,
+            geodesic: true,
+            strokeColor: "#FF0000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            map: map
+        });
+        newMarker.setMap(map);
+        currentHistoryMarkers.push(newMarker);
+
+    }
+
+
+});
+
+var currentHistoryMarkers = [];
+
+connection.on("UpdateHistory", function (message) {
+    const obj = JSON.parse(message);
+
+    //"[
+    //{\"lat\":6.964260599999999,\"lng\":51.6559681},
+    //{\"lat\":7.465298100000001,\"lng\":51.5135872},
+    //{\"lat\":10.983056,\"lng\":51.166667}
+    //]"
+
+
+    // Remove markers from map
+    currentHistoryMarkers.forEach(element => element.setMap(null));
+    currentHistoryMarkers = [];
+
+    const flightPlanCoordinates = [
+
+    ];
+
+    obj.forEach(element => {
+        //element.lat,
+        //element.lng,
+        flightPlanCoordinates.push(element);
+    });
+
+    const newMarker = new google.maps.Polyline({ // https://developers.google.com/maps/documentation/javascript/reference/polygon#Polyline
+        path: flightPlanCoordinates,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+        map: map
+    });
+
+    currentHistoryMarkers.push(newMarker);
+
+    // https://developers.google.com/maps/documentation/javascript/reference/visualization#HeatmapLayer
+});
+
+connection.on("AddHistory", function (message) {
+    const obj = JSON.parse(message);
+
+    //obj.Latitude,
+    //obj.Longitude,
+
+    // add new lat/long to last path
+
+    currentHistoryMarkers[currentHistoryMarkers.length - 1].getPath().push({ lat: 6.964260599999999, lng: 51.6559681 });
+});
+

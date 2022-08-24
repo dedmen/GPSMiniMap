@@ -10,7 +10,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GPSMiniMap.Database;
 using GPSMiniMap.Hubs;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GPSMiniMap
 {
@@ -33,6 +36,12 @@ namespace GPSMiniMap
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "GPSMiniMap", Version = "v1" });
             });
             services.AddSignalR();
+            services.AddHttpContextAccessor();
+            
+            services.AddSingleton<TwitchAPI>();
+            services.AddDbContext<Context>();
+
+            services.AddSingleton<StreamTitleMonitor>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

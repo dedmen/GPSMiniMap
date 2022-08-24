@@ -96,6 +96,9 @@ namespace GPSMinimapReceiver
             bool wasReconnecting = false;
             timer.Elapsed += (x, y) =>
             {
+                if (!obs.IsConnected) return;
+
+
                 var status = obs.GetStreamStatus();
                 if (status.IsReconnecting != wasReconnecting)
                 {

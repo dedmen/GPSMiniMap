@@ -45,6 +45,7 @@ namespace GPSMiniMapSender.Services
                                 (sender, certificate, chain, sslPolicyErrors) => { return true; };
                         return message;
                     };
+                    opts.AccessTokenProvider = () => Task.FromResult("locationService");
                 })
                 .WithAutomaticReconnect(new EndlessRetryPolicy())
                 .Build();
