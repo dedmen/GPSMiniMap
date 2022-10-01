@@ -28,7 +28,7 @@ namespace GPSMinimapReceiver.Automations
                 if (name == "OBS Out")
                 {
                     // its back, lets disable desktop audio again
-                    obs.SetInputMute("Desktop Audio", true);
+                    obs.SetInputMute("Desktop-Audio", true);
                 }
             };
 
@@ -38,7 +38,7 @@ namespace GPSMinimapReceiver.Automations
                 if (name == "OBS Out")
                 {
                     // Oh no, obs out disappeared, lets fallover to backup
-                    obs.SetInputMute("Desktop Audio", false);
+                    obs.SetInputMute("Desktop-Audio", false);
                 }
             };
         }

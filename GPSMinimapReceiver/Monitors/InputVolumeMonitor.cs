@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using DocumentDatabase;
 using OBSWebsocketDotNet;
 using OBSWebsocketDotNet.Types;
+using OBSWebsocketDotNet.Types.Events;
 
 namespace GPSMinimapReceiver
 {
@@ -37,9 +38,9 @@ namespace GPSMinimapReceiver
             ServiceManager.GetService<OBSWebsocket>().InputVolumeMeters += OnUpdate;
         }
 
-        public void OnUpdate(OBSWebsocket sender, List<InputVolumeMeter> inputs)
+        public void OnUpdate(object sender, InputVolumeMetersEventArgs args)
         {
-            foreach (var inputVolumeMeter in inputs)
+            foreach (var inputVolumeMeter in args.inputs)
             {
                 bool isActive = inputVolumeMeter.InputLevels.Any(x => x.PeakRaw > 0);
 

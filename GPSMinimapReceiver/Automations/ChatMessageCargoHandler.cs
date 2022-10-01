@@ -54,13 +54,14 @@ namespace GPSMinimapReceiver.Automations
 
             // Update OBS source
 
-            SourceSettings truckLoading = obs.GetSourceSettings("Truck cargo");
-            truckLoading.Settings["file"] = $"d:/rec/stream/truck/truck_{(loading ? "l" : "u")}pbar_{percentage}.png";
-            obs.SetSourceSettings("Truck cargo", truckLoading.Settings);
 
-            truckLoading = obs.GetSourceSettings("Truck cargo percentage");
+            InputSettings truckLoading = obs.GetInputSettings("Truck cargo");
+            truckLoading.Settings["file"] = $"d:/rec/stream/truck/truck_{(loading ? "l" : "u")}pbar_{percentage}.png";
+            obs.SetInputSettings("Truck cargo", truckLoading.Settings);
+
+            truckLoading = obs.GetInputSettings("Truck cargo percentage");
             truckLoading.Settings["text"] = $"{(loading ? "L" : "Unl")}oading... ({percentage} %)";
-            obs.SetSourceSettings("Truck cargo percentage", truckLoading.Settings);
+            obs.SetInputSettings("Truck cargo percentage", truckLoading.Settings);
 
             truckLoading = null;
         }
