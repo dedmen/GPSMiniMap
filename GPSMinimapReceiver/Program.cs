@@ -72,8 +72,8 @@ namespace GPSMinimapReceiver
 
                 if (chatMessage.Message == "test")
                 {
-                    SourceSettings settings = obs.GetSourceSettings("Truck cargo percentage");
-                    Console.WriteLine($"{settings.SourceName}: {settings.SourceKind}, {settings.Settings}");
+                    //SourceSettings settings = obs.Source GetSourceSettings("Truck cargo percentage");
+                    //Console.WriteLine($"{settings.SourceName}: {settings.SourceKind}, {settings.Settings}");
                 }
 
             });

@@ -30,7 +30,7 @@ namespace GPSMinimapReceiver.Automations
         {
             var obs = ServiceManager.GetService<OBSWebsocket>();
             var TTS = ServiceManager.GetService<SpeechSynthesizer>();
-            var currentScene = obs.GetCurrentScene();
+            var currentScene = obs.GetCurrentProgramScene();
 
             if (arguments.Length > 1)
             {
@@ -72,7 +72,7 @@ namespace GPSMinimapReceiver.Automations
                 // Code for switching scenes
 
                 string newSceneName;
-                switch (currentScene.Name)
+                switch (currentScene)
                 {
                     case "Szene":
                         newSceneName = "Szene 1";
